@@ -9,6 +9,7 @@ O conteúdo a seguir não é regra talhada em pedra, sempre leve o cenário em q
 
 Iremos começar com um resumo geral da estrutura e posteriormente terá uma explicação detalhada de cada tópico. O resumo servirá como uma introdução, terá tudo o que você precisa saber para entender e se localizar em um projeto. Já a explicação detalhada será o que você precisa saber para desenvolver e concluir os seus WI!
 
+## Resumo:
 ## Arquitetura limpa, o que é e por que usar?
 
 A arquitetura limpa, segundo Robert Martin, é uma maneira de separar as políticas, dos detalhes do seu software. As políticas de um software compõem todos os casos de uso, regras e modelos do seu negócio. Enquanto todo o resto seria os detalhes, desde a sua UI, o seu framework, banco de dados, a api que você consome, bibliotecas e tudo aquilo que é externo à aplicação. Desta forma você terá os componentes da regra de negócio mais estáveis e não vinculados a detalhes menores do código.
@@ -208,3 +209,198 @@ Para não confundir os devs mais tradicionais de .NET Maui, as nossas views e vi
 </table>
 
 <h4>Agora como será a estrutura dessas classes, a comunicação entre as camadas, como vamos lidar com os erros, quais design patterns são interessantes para o nosso cenário e vários outros detalhes técnicos que você precisa saber para resolver seus primeiros WIs você verá a seguir.</h4>
+
+## Conteúdo aprofundado:
+## Desenvolvimento e organização das nossas classes
+
+Gostaria de iniciar a nossa abordagem mais aprofundada falando do básico. Como o nosso projeto será orientado a objetos, nada mais justo do que começar falando sobre como criar e organizar as nossas classes.
+
+Começaremos então falando de <b>SOLID!</b>
+
+### SOLID, o que cada acrônimo significa e como utilizar na prática
+
+SOLID é um conjunto de acrônimos, onde cada letra representa um princípio. São eles:
+
+* <b>S</b>, SRP ou princípio de responsabilidade única.
+* <b>O</b>, OCP ou princípio de aberto e fechado.
+* <b>L</b>, princípio da substituição de Liskov.
+* <b>I</b>, princípio da segregação de interfaces.
+* <b>D</b>, princípio da inversão de dependências.
+
+### S - Princípio de responsabilidade única
+
+Este princípio implica que uma classe deve ter apenas uma responsabilidade, ou seja, ela deve cuidar de apenas uma única coisa e deve mudar por apenas um único motivo. Vamos a um exemplo prático:
+
+Imagine que você esteja trabalhando em um sistema de vendas e você está desenvolvendo uma classe para processar um pedido:
+
+```
+# pseudocodigo
+
+class ProcessadorDePedidos {
+    public IPedidoProcessado ProcessarPedido(IPedido pedido) {
+        // verifica o estoque
+        this._verificaEstoque(pedido)
+        // processa o pagamento
+        this._processaPagamento(pedido)
+        // retorna o pedido processado
+    }
+
+    private boolean _verificaEstoque(IPedido pedido) {
+        // lógica para verificar o estoque 
+    }
+
+    private IPagamentoProcessado _processaPagamento(IPedido pedido) {
+        // lógica para processar o pagamento do pedido
+    }
+}
+```
+
+Esta classe pode até parecer correta, porém ela esconde um grande problema, ela possui mais de uma responsabilidade. Podemos confirmar isto com uma simples pergunta. 
+
+<i>Se a nossa lógica de verificar o estoque ou a nossa lógica de processar o pagamento mudar, a nossa classe será alterada?</i>
+A resposta é que sim, se as lógicas de processar o pagamento e verificar o estoque mudarem, a nossa classe sofrerá mudanças. 
+
+Mas você deve estar se perguntando, "Mas para processar um pedido eu tenho que verificar o estoque e processar o pagamento". Sim isto é verdade, porém não é RESPONSABILIDADE da classe ProcessadorDePedidos cuidar desta lógica. O que devemos fazer então é mover estas lógicas para classes separadas. Ficando então:
+
+```
+# pseudocodigo
+
+class VerificadorDeEstoque implements IVerificadorDeEstoque {
+    public boolean VerificaEstoque(IPedido pedido) {
+        // lógica para verificar o estoque 
+    }
+}
+
+class ProcessadorDePagamentos implements IProcessadorDePagamentos {
+    public IPagamentoProcessado ProcessaPagamento(IPedido pedido) {
+        // lógica para processar o pagamento
+    }
+}
+```
+
+E a nossa classe de ProcessadorDePedidos poderá funcionar da seguinte forma:
+
+```
+# pseudocodigo
+
+class ProcessadorDePedidos {
+    private IVerificadorDeEstoque verificadorDeEstoque
+    private IProcessadorDePagamentos processadorDePagamentos
+
+    public constructor(
+        IVerificadorDeEstoque verificadorDeEstoque,
+        IProcessadorDePagamentos processadorDePagamentos
+    ) {
+        this.verificadorDeEstoque = verificadorDeEstoque
+        this.processadorDePagamentos = processadorDePagamentos
+    }
+
+    public IPedidoProcessado ProcessarPedido(IPedido pedido) {
+        // verifica o estoque
+        this.verificadorDeEstoque.VerificaEstoque(pedido)
+
+        // processa o pagamento
+        this.processadorDePagamentos.ProcessaPagamento(pedido)
+
+        // retorna o pedido processado
+    }
+}
+```
+
+Desta maneira desacoplamos a responsabilidade de processar o pagamento e de verificar o estoque da nossa classe de processar pedidos sem interferir na lógica do negócio. Portanto, se o governo adicionar um novo tributo que impacte no processo de pagamentos ou que a lógica por trás de verificar o estoque mude, a nossa classe de processar pedidos não será influenciada.
+
+Em resumo, a nossa classe de ProcessadorDePedidos só irá mudar por um único motivo, se o fluxo de processar um pedido mudar. 
+
+Aqui mesmo sem percebermos conseguimos implementar não só vários princípios do SOLID, mas também o design pattern de FACADE ou fachada.
+ 
+### FACADE
+
+O padrão de projeto de fachada ou facade, simplifica processos mais complexos ao fornecer uma interface simplificada para estes. Vamos imaginar o seguinte exemplo, você precisa consultar a geolocalização do usuário em uma dada tela. Então você teria a sua view e sua viewmodel mais ou menos assim:
+
+```
+# Pseudocodigo da view
+
+<ContentPage>
+        <Button 
+            Text="Onde estou?"
+            Clicked="OnClickRecuperarLocalizacao"
+            />
+
+        <Label
+            Text="Minha localização: "
+            />
+</ContentPage>
+
+
+# Pseudocodigo da viewmodel
+
+class ViewModel {
+    public void OnClickRecuperarLocalizacao() {
+
+        // lógica para pedir a permissão da localização
+        // verifica se o aplicativo tem permissão para acessar a localização
+
+        // consome uma biblioteca de geolocalização para recuperar a localização atual
+        
+        // edita o texto da localização 
+    }
+}
+```
+
+Agora vamos imaginar que você precisa recuperar a localização do usuário novamente só que em outra tela.
+
+Meses depois de ter terminado estas duas telas, o Android atualiza e muda a forma como você recupera a localização do usuário. Neste caso você teria que modificar duas telas e caso você esqueça de atualizar uma das telas...
+
+Como podemos resolver este problema, simples! Implementando o padrão de projeto de fachada. Você irá começar criando uma interface para o mesmo:
+
+```
+# pseudocodigo
+interface IGeolocalizacao {
+    Localizacao RecuperarLocalizacao()
+}
+```
+
+Depois disso iremos criar a nossa classe de fachada que implementará esta interface:
+
+```
+# pseudocodigo
+class Geolocalizacao implements IGeolocalizacao {
+    private IGerenciadorDePermissoes _gerenciadorDePermissoes
+
+    constructor (IGerenciadorDePermissoes gerenciadorDePermissoes) {
+        this._gerenciadorDePermissoes = gerenciadorDePermissoes
+    }
+
+    public Localizacao RecuperarLocalizacao() {
+        // lógica para verificar a permissão
+        this._gerenciadorDePermissoes.verificarPermissao(EnumPermissoes.localizacao);
+
+        // lógica para recuperar a permissão
+    }
+}
+```
+
+Agora que possuímos uma classe de fachada para lidar com a geolocalização vamos implementar ela nas nossas viewmodels.
+
+```
+# pseudocodigo
+
+class ViewModel {
+    private IGeolocalizacao _geolocalizacao
+
+    constructor (IGeolocalizacao geolocalizacao) {
+        this._geolocalizacao = geolocalizacao
+    }
+
+    public void OnClickRecuperarLocalizacao() {
+        // recupera a geolocalização
+        this._geolocalizacao.RecuperarLocalizacao()
+
+        // edita o texto da localização 
+    }
+}
+```
+
+Com isso, extraímos a lógica detalhada de permissões e geolocalização para uma única classe, que funciona como fachada. Essa abordagem simplifica o uso da funcionalidade nas camadas superiores (como ViewModels), melhora a manutenibilidade e reduz a chance de erros ao repetir código semelhante em vários lugares.
+
+### O - Princípio de aberto e fechado
