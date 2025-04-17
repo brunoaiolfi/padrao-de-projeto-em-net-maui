@@ -404,3 +404,36 @@ class ViewModel {
 Com isso, extraímos a lógica detalhada de permissões e geolocalização para uma única classe, que funciona como fachada. Essa abordagem simplifica o uso da funcionalidade nas camadas superiores (como ViewModels), melhora a manutenibilidade e reduz a chance de erros ao repetir código semelhante em vários lugares.
 
 ### O - Princípio de aberto e fechado
+
+O princípio de aberto e fechado implica que as suas classes devem estar abertas para extensão, mas fechadas para modificação.
+
+Dessa forma precisamos desenvolver o nosso código de modo que ele possa ser estendido sem precisar ser alterado. Vamos a um exemplo prático, no mesmo contexto da aplicação de processamento de pedidos, agora o nosso sistema possibilitará o cliente dar descontos aos pedidos. Estes descontos são, descontos fixos ou descontos percentuais. Vamos ao nosso pseudocódigo:
+
+```
+# pseudocodigo
+class CalculadoraDeDescontos {
+    public double calcularDescontoFixo(
+        double valorDoPedido, 
+        double valorDoDesconto
+    ) {
+        // lógica para calcular o desconto
+    }
+
+    public double calcularDescontoPercentual(
+        double valorDoPedido, 
+        double percentualDeDesconto
+    ) {
+        // lógica para calcular o desconto
+    }
+}
+```
+
+Caso posteriormente o nosso sistema de processamento de pedidos queira dar suporte ao desconto por fidelidade do cliente ou então um desconto condicional, para isso teríamos que modificar a nossa classe CalculadoraDeDescontos. Logo a nossa classe está aberta à modificações. Quando possuímos uma classe como esta, que já está sendo utilizada em outras partes do sistema e está aberta para modificações podemos estar introduzindo novos bugs ou comportamentos inesperados ao sistema. 
+
+Uma forma comum de perceber que estamos violando o OCP é quando temos várias regras para uma mesma ação (como calcular um desconto), espalhadas por métodos específicos ou estruturas condicionais (if, switch). Isso torna a classe rígida e propensa a modificações a cada nova regra de negócio.
+
+Podemos resolver este problema através com o design pattern strategy.
+
+### STRATEGY 
+
+O conceito de estratégia. do grego στρατηγική(strategia).
