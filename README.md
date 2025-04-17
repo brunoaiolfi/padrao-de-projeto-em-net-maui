@@ -436,4 +436,35 @@ Podemos resolver este problema através com o design pattern strategy.
 
 ### STRATEGY 
 
-O conceito de estratégia. do grego στρατηγική(strategia).
+O conceito de estratégia, do grego στρατηγική(strategia), permite encapsular algoritmos diferentes sob uma interface comum, tornando possível intercambiá-los dinamicamente, sem que a classe que os utiliza precise conhecer os detalhes da implementação de cada algoritmo.
+
+Vamos por este padrão de projeto em prática com o exemplo anterior. Primeiro criaremos uma interface que irá encapsular o método de calcular desconto.
+
+```
+# pseudocodigo
+
+interface ICalculadoraDeDesconto {
+    float calcular(float valor, float quantidadeDeDesconto)
+}
+
+```
+
+Com a interface criada, vamos criar classes que representam cada tipo de cálculo de desconto.
+
+```
+#pseudocodigo
+
+class CalculadoraDescontoFixo implements ICalculadoraDeDesconto {
+    float calcular(float valor, float quantidadeDeDesconto) {
+        return valor - quantidadeDeDesconto
+    }
+}
+
+class CalculadoraDescontoPercentual implements ICalculadoraDeDesconto {
+    float calcular(float valor, float quantidadeDeDesconto) {
+        return valor - (valor * quantidadeDeDesconto / 100)
+    }
+}
+```
+
+Desta maneira, encapsulamos as diferentes estratégias de cálculo de desconto.
